@@ -1,0 +1,23 @@
+---
+- name: Patch bootstrap for static ip
+  when:
+    - openshift_version lt 14
+    - baremetal_ipi
+  ansible.builtin.template:
+    src: bootstrap_network_config.ign.j2
+    dest: {{ cluster_configs }}/bootstrap_network_config.ign
+
+- name: Backup old bootstrap.ign
+  when:
+    - openshift_version_major lt 4
+    - openshift_version_minor lt 14
+    - baremetal_ipi
+  ansible.builtin.remote_copy:
+    src: {{ cluster_configs }}/bootstrap.ign
+    dest: {{ cluster_configs }}/bootstrap.ign.orig
+
+- name: Replace network config in bootstrap.ign
+  when:
+    - openshift_version lt 14
+    - baremetal_ipi
+    # jq '.storage.files += $input' <cluster_configs>/bootstrap.ign.orig --slurpfile input bootstrap_network_config.ign > <cluster_configs>/bootstrap.ign

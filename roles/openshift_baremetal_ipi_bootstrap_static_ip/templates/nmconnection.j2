@@ -1,0 +1,9 @@
+[connection]
+type=ethernet
+interface-name=ens3
+[ethernet]
+[ipv4]
+method=manual
+addresses={{ bootstrapExternalStaticIP }}/{{ bootstrapExternalSubnetCIDR }}
+gateway={{ bootstrapExternalStaticGateway }}
+dns={{ bootstrapExternalStaticDNS }}

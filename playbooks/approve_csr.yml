@@ -1,0 +1,28 @@
+---
+- name: Approve OpenShift CSRs
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Fetch list of CSRs
+      register: list_csr
+      kubernetes.core.k8s_info:
+        api_version: certificates.k8s.io/v1
+        kind: CertificateSigningRequest
+
+    - name: Debug
+      with_items:
+        - list_csr.resources
+      ansible.builtin.debug:
+        msg: "{{ item.metadata.name }}"
+
+    - name: Approve CSRs
+      with_items:
+        - list_csr.resources
+      command: oc adm certificate approve {{ item.metadata.name }}
+
+    # - name: URI
+    #   with_items: "{{ list_csr.resources }}"
+    #   ansible.builtin.uri:
+    #     uri: https://{{ k8s_api_url }}/apis/certificates.k8s.io/v1/certificatesigningrequests/{{ item.metadata.name }}/approval
+    #     method: PUT

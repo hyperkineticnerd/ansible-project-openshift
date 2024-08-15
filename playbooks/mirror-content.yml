@@ -1,0 +1,12 @@
+# https://access.redhat.com/labs/ocpupgradegraph/update_path/?channel=eus-4.12&arch=x86_64&is_show_hot_fix=false&current_ocp_version=4.10.65&target_ocp_version=4.12.43
+---
+- hosts: all
+  vars:
+    starting_version: 4.10.65
+    ending_version: 4.12.43
+  tasks:
+    - name: Create mirror manifest
+      yaml:
+        contents:
+
+    - name: Execute content mirror

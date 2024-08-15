@@ -1,0 +1,40 @@
+---
+- name: Analysis of OpenShift Utilization
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  tasks:
+    - name: Worker Nodes
+      register: node_list
+      kubernetes.core.k8s_info:
+        kind: Node
+        label_selectors:
+          # - kubernetes.io/hostname=master-0
+          # - node-role.kubernetes.io/control-plane
+          # - node-role.kubernetes.io/master
+          - node-role.kubernetes.io/worker
+
+    - name: Node Info
+      ansible.builtin.debug:
+        var: node_list.resources[0].status.nodeInfo
+
+    - name:  Node Capacity
+      ansible.builtin.debug:
+        var: node_list.resources[0].status.capacity
+
+    - name:  Node Allocatable Resources
+      ansible.builtin.debug:
+        var: node_list.resources[0].status.allocatable
+
+    - name: Pods
+      register: pod_list
+      kubernetes.core.k8s_info:
+        kind: Pod
+        field_selectors:
+          - metadata.namespace=openshift-\*
+        # namespace: openshift-*
+        # label_selectors:
+          # - kubernetes.io/hostname=master-0
+          # - node-role.kubernetes.io/control-plane
+          # - node-role.kubernetes.io/master
+          # - node-role.kubernetes.io/worker

@@ -1,0 +1,63 @@
+$ oc set data secret/pull-secret -n openshift-config --from-file=.dockerconfigjson=.mirrorsecretconfigjson
+S oc create configmap registry-config --from-file=mirror.registry.com..443=/root/certs/ca-chain.cert.pem -n openshift-config
+$ oc patch image.config.openshift.io/cluster --patch '{"spec":{"additionalTrustedCA":{"name":"registry-config"}}}' --type=merge
+
+---
+- hosts: all
+  vars:
+    starting_version: 4.10.65
+    ending_version: 4.12.43
+  tasks:
+    - name: Backup Registry CA
+
+    - name: Upload Registry CA
+      kubernetes.core.k8s:
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: registry-config
+            namespace: openshift-config
+          data:
+            "{{ new_registry_uri }}..{{ new_registry_port }}": |
+             {{ new_registry_ca_cert }}
+
+    - name: Update ClusterImage
+      kubernetes.core.k8s:
+        api_version: config.openshift.io/v1
+        kind: Image
+        state: patched
+        definition:
+          spec:
+            additionalTrustedCA:
+              name: registry-config
+
+    - name: Backup Global Pull Secret
+
+    - name: Update Global Pull Secret
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Secret
+        name: pull-secret
+        namespace: openshift-config
+        state: patched
+      definition:
+        data:
+          .dockerconfigjson: |
+            {{ new_registry_dockerconfig }}
+    
+    # - name: 
+
+---
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  name: mirror-ocp
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - mirror.registry.com:443/ocp/release 
+    source: quay.io/openshift-release-dev/ocp-release 
+  - mirrors:
+    - mirror.registry.com:443/ocp/release
+    source: quay.io/openshift-release-dev/ocp-v4.0-art-dev

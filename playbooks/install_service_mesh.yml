@@ -1,0 +1,12 @@
+---
+- name: Install Service Mesh
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+  roles:
+    - role: hyperkineticnerd.openshift.create_namespace
+      create_namespace_name: istio-system
+    # - role: hyperkineticnerd.openshift.install_kiali
+    # - role: hyperkineticnerd.openshift.install_jaeger
+    - role: hyperkineticnerd.openshift.install_service_mesh

@@ -1,0 +1,9 @@
+---
+- name: Clean Up IPI Install
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: List bootstrap VMs
+      community.libvirt.virt:
+        command: "list_vms"

@@ -1,0 +1,35 @@
+---
+- name: Test
+  hosts: localhost
+  gather_facts: false
+  vars:
+    ipi_installer: 'openshift-baremetal-install'
+    imagesourcecontentpolicy_file: icsp.yaml
+    ocp_release_sha: "sha256:a4e3391f3ff6e33211a91ccd446f2dc57075301e3b974023172b8b8f6aac5461"
+    pull_secret_file: 'my-pull-secret.json'
+    ansible_hostname: registry
+    dns:
+      domain: developer.hkn.lab
+    registry_port: '5050'
+    registry_server: 'registry.developer.hkn.lab'
+    registry_path: '/infrastructure-as-code/openshift4/tools/mirror'
+    release_image_url: "{{ registry_server }}{{ registry_path }}/openshift/release-images@{{ ocp_release_sha }}"
+  tasks:
+    - name: Create imageSourceContentPolicy
+      ansible.builtin.template:
+        src: icsp.yaml.j2
+        dest: "{{ imagesourcecontentpolicy_file }}"
+        mode: '0644'
+
+    - name: Download openshift-ipi baremetal installer
+      ansible.builtin.command:
+        argv:
+          - oc
+          - adm
+          - release
+          - extract
+          - --registry-config={{ pull_secret_file }}
+          - --icsp-file={{ imagesourcecontentpolicy_file }}
+          - --command={{ ipi_installer }}
+          - "{{ release_image_url }}"
+        creates: openshift-baremetal-install

@@ -1,0 +1,80 @@
+- name: Unassign gp2 as the default class
+  kubernetes.core.k8s:
+    state: present
+    force: yes
+    definition:
+      allowVolumeExpansion: true
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      metadata:
+        annotations:
+          storageclass.kubernetes.io/is-default-class: "false"
+        name: gp2
+      parameters:
+        encrypted: "true"
+        type: gp2
+      provisioner: kubernetes.io/aws-ebs
+      reclaimPolicy: Delete
+      volumeBindingMode: WaitForFirstConsumer
+
+- name: Assign gp2-csi as default class
+  kubernetes.core.k8s:
+    state: present
+    force: yes
+    definition:
+      allowVolumeExpansion: true
+      apiVersion: storage.k8s.io/v1
+      kind: StorageClass
+      metadata:
+        annotations:
+          storageclass.kubernetes.io/is-default-class: "true"
+        name: gp2-csi
+      parameters:
+        encrypted: "true"
+        type: gp2
+      provisioner: ebs.csi.aws.com
+      reclaimPolicy: Delete
+      volumeBindingMode: WaitForFirstConsumer
+
+- name: Validate & set csi-aws-vsc VolumeSnapshotClass as default
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: snapshot.storage.k8s.io/v1
+      deletionPolicy: Delete
+      driver: ebs.csi.aws.com
+      kind: VolumeSnapshotClass
+      metadata:
+        name: csi-aws-vsc
+        annotations:
+          snapshot.storage.kubernetes.io/is-default-class: “true”
+
+
+---
+- name: Add bitnami repo
+  kubernetes.core.helm_repository:
+    name: bitnami
+    repo_url: ”https://charts.bitnami.com/bitnami”
+
+
+- name: Deploy dokuwiki within dokuwiki namespace
+  kubernetes.core.helm:
+    name: dokuwiki
+    chart_ref: bitnami/dokuwiki
+    release_namespace: dokuwiki
+    create_namespace: true
+
+- name: Create VolumeSnapshot
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: snapshot.storage.k8s.io/v1
+      kind: VolumeSnapshot
+      metadata:
+        name: new-snapshot-test
+        namespace: dokuwiki
+      spec:
+        volumeSnapshotClassName: csi-aws-vsc
+        source:
+          persistentVolumeClaimName: dokuwiki-pvc
+

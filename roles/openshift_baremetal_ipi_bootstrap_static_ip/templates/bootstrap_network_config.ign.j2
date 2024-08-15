@@ -1,0 +1,7 @@
+{
+  "path": "/etc/NetworkManager/system-connections/nmconnection",
+  "mode": 384,
+  "contents": {
+    "source": "data:text/plain;charset=utf-8;base64,{{ lookup('ansible.builtin.template', 'nmconnection.j2') | ansible.builtin.b64encode }}"
+  }
+}
