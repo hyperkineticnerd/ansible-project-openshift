@@ -1,1 +1,5 @@
-    bootstrap_network_interface: ens3
+bootstrap_network_interface: ens3
+provisioning_network: Disabled
+bootstrap_ip_address: 172.16.140.250
+bootstrap_gateway: 172.16.140.254
+bootstrap_dns: 172.16.140.251,172.16.140.252
