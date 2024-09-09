@@ -1,0 +1,36 @@
+---
+- name: Change default ingress certificate
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+  # module_defaults:
+  #   kubernetes.core.k8s:
+  #     kubeconfig: /home/snelson/.kube/config
+  tasks:
+    - name: Create secret for wildcard certificate and key
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: wildcard-cert
+            namespace: openshift-ingress
+          stringData:
+            tls.crt: |
+              {{ lookup('ansible.builtin.file', '/etc/pki/tls/certs/apps-hub.crt') }}
+            tls.key: |
+              {{ lookup('ansible.builtin.file', '/etc/pki/tls/private/apps-hub.key') }}
+
+    - name: Update the Ingress Controller configuration
+      kubernetes.core.k8s:
+        state: patched
+        api_version: operator.openshift.io/v1
+        kind: IngressController
+        name: default
+        namespace: openshift-ingress-operator
+        definition:
+          spec:
+            defaultCertificate:
+              name: "wildcard-cert"

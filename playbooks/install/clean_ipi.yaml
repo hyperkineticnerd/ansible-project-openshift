@@ -1,0 +1,47 @@
+---
+- name: Clean Up IPI Install
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  module_defaults:
+    community.libvirt.virt_pool:
+      uri: "qemu:///session?socket=/Users/hyperkineticnerd/.cache/libvirt/libvirt-sock"
+    community.libvirt.virt:
+      uri: "qemu:///session?socket=/Users/hyperkineticnerd/.cache/libvirt/libvirt-sock"
+  tasks:
+    - name: List all Virtual Machines
+      community.libvirt.virt:
+        command: "list_vms"
+      register: all_vms
+
+    - name: Remove bootstrap VMs
+      with_items: 
+        - "{{ all_vms.list_vms }}"
+      when:
+        - item is search('-bootstrap') 
+      community.libvirt.virt:
+        name: "{{ item }}"
+        force: true
+
+    - name: List all Storage Pools
+      community.libvirt.virt_pool:
+        command: "list_pools"
+      register: all_pools
+
+    - name: Stop bootstrap Pools
+      with_items: 
+        - "{{ all_pools.list_pools }}"
+      when:
+        - item is search('-bootstrap') 
+      community.libvirt.virt_pool:
+        name: "{{ item }}"
+        state: "inactive"
+
+    - name: Undefine bootstrap Pools
+      with_items: 
+        - "{{ all_pools.list_pools }}"
+      when:
+        - item is search('-bootstrap') 
+      community.libvirt.virt_pool:
+        name: "{{ item }}"
+        state: "undefine"

@@ -1,0 +1,22 @@
+---
+- name: Change default ingress certificate
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: false
+  # module_defaults:
+  #   kubernetes.core.k8s:
+  #     kubeconfig: /home/snelson/.kube/config
+  tasks:
+    - name: Create configmap for the Root CA used to sign the wildcard certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: user-ca-bundle
+            namespace: openshift-config
+          data:
+            ca-bundle.crt: |
+              {{ lookup('ansible.builtin.file', '/etc/ipa/ca.crt') }}

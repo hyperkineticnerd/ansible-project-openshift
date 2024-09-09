@@ -1,0 +1,35 @@
+---
+- name: Add Registry CA certificate
+  hosts: localhost
+  become: true
+  gather_facts: false
+  module_defaults:
+    kubernetes.core.k8s:
+      kubeconfig: /home/snelson/.kube/config
+  tasks:
+    - name: Create configmap for the Root CA used to sign the wildcard certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: ipa-ca
+            namespace: openshift-config
+          data:
+            updateservice-registry: |
+              {{ lookup('file', '/etc/ipa/ca.crt') }}
+            quay.developer.hkn.lab..8443: |
+              {{ lookup('file', '/etc/ipa/ca.crt') }}
+
+
+    - name: Update the cluster-wide proxy configuration
+      kubernetes.core.k8s:
+        state: patched
+        api_version: config.openshift.io/v1
+        kind: Image
+        name: cluster
+        definition:
+          spec:
+            additionalTrustedCA:
+              name: ipa-ca

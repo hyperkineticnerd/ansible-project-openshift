@@ -1,0 +1,26 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ bmh_secret_name }}
+type: Opaque
+data:
+  username: {{ bmh_secret_bmh1_username }}
+  password: {{ bmh_secret_bmh1_username }}
+
+---  
+apiVersion: metal3.io/v1alpha1
+kind: BareMetalHost
+metadata:
+  name: {{ bmh_host_name }}
+  namespace: {{ namespace }}
+spec:
+  # userData: {}
+  # networkData: {}
+  bmc:
+    address: {{ bmh_host_bmc_address }} # redfish-virtualmedia://<host>:<port>/<systemID>
+    credentialsName: {{ bmh_secret_name }}
+  bootMACAddress: {{ bmh_host_mac }}
+  rootDeviceHints:
+    deviceName: /dev/sda
+  online: true

@@ -16,12 +16,12 @@
       ansible.builtin.debug:
         msg: "{{ item.metadata.name }}"
 
-    - name: Approve CSRs
+    - name: Approve CSRs via OpenShift Client
       with_items:
         - list_csr.resources
-      command: oc adm certificate approve {{ item.metadata.name }}
+      ansible.builtin.command: oc adm certificate approve {{ item.metadata.name }}
 
-    # - name: URI
+    # - name: Approve CSRs via OpenShift API URI
     #   with_items: "{{ list_csr.resources }}"
     #   ansible.builtin.uri:
     #     uri: https://{{ k8s_api_url }}/apis/certificates.k8s.io/v1/certificatesigningrequests/{{ item.metadata.name }}/approval

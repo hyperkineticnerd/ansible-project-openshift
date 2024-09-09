@@ -1,0 +1,20 @@
+---
+- name: Change default ingress certificate
+  hosts: localhost
+  connection: local
+  become: false
+  gather_facts: false
+  # module_defaults:
+  #   kubernetes.core.k8s:
+  #     kubeconfig: /home/snelson/.kube/config
+  tasks:
+    - name: Update the cluster-wide proxy configuration
+      kubernetes.core.k8s:
+        state: patched
+        api_version: config.openshift.io/v1
+        kind: Proxy
+        name: cluster
+        definition:
+          spec:
+            trustedCA:
+              name: user-ca-bundle
